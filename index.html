@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英熟語練習アプリ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --coral: #E8614A; --coral-light: #FDECEA; --coral-dark: #C94A35;
+    --navy: #1A2340; --navy-mid: #2E3D60; --gray: #6B7280;
+    --gray-light: #F5F6F8; --white: #FFFFFF; --green: #2D9A6B;
+    --green-light: #E6F7F1; --amber: #D97706; --amber-light: #FEF3C7;
+    --shadow: 0 2px 12px rgba(26,35,64,0.10); --shadow-lg: 0 8px 32px rgba(26,35,64,0.15);
+  }
+  body { font-family: 'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif; background:var(--gray-light); color:var(--navy); min-height:100vh; }
+  header { background:var(--navy); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+  header h1 { font-size:17px; font-weight:700; color:var(--white); }
+  header h1 span { color:var(--coral); }
+  .screen { display:none; }
+  .screen.active { display:block; }
+
+  /* TOP */
+  #top-screen { padding:20px 16px 40px; }
+  .section-label { font-size:11px; font-weight:700; color:var(--gray); letter-spacing:0.1em; margin:20px 0 10px; }
+  .mode-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mode-card { background:var(--white); border-radius:14px; padding:16px 14px; border:2px solid #E2E5EE; cursor:pointer; transition:all 0.15s; box-shadow:var(--shadow); }
+  .mode-card:active { transform:scale(0.97); }
+  .mode-card.active-mode { border-color:var(--coral); background:var(--coral-light); }
+  .mode-card .mode-icon { font-size:26px; margin-bottom:6px; }
+  .mode-card .mode-name { font-size:13px; font-weight:700; margin-bottom:2px; }
+  .mode-card .mode-desc { font-size:10px; color:var(--gray); line-height:1.4; }
+  .missed-badge { display:inline-block; background:var(--amber); color:white; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; margin-top:4px; }
+  .range-box { background:var(--white); border-radius:14px; padding:16px; box-shadow:var(--shadow); }
+  .range-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .range-row label { font-size:12px; font-weight:700; color:var(--navy); white-space:nowrap; width:52px; }
+  .range-input { flex:1; border:2px solid #E2E5EE; border-radius:10px; padding:10px 12px; font-size:18px; font-weight:700; color:var(--navy); text-align:center; outline:none; transition:border 0.15s; -webkit-appearance:none; }
+  .range-input:focus { border-color:var(--coral); }
+  .range-hint { font-size:11px; color:var(--gray); margin-bottom:10px; }
+  .range-quick { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .quick-btn { background:var(--gray-light); border:1.5px solid #E2E5EE; border-radius:8px; padding:5px 10px; font-size:11px; font-weight:700; color:var(--navy-mid); cursor:pointer; transition:all 0.12s; }
+  .quick-btn:active { background:var(--coral-light); border-color:var(--coral); color:var(--coral-dark); }
+  .range-preview { border-radius:10px; padding:10px 14px; font-size:12px; font-weight:700; min-height:36px; background:var(--coral-light); color:var(--coral-dark); }
+  .range-preview.error { background:#FEE2E2; color:#DC2626; }
+  .range-preview.empty { background:var(--gray-light); color:var(--gray); }
+  .start-btn { width:100%; margin-top:16px; padding:16px; background:var(--coral); color:white; font-size:16px; font-weight:700; border:none; border-radius:14px; cursor:pointer; box-shadow:0 4px 16px rgba(232,97,74,0.35); transition:all 0.15s; }
+  .start-btn:active { transform:scale(0.98); background:var(--coral-dark); }
+  .start-btn:disabled { background:#ccc; box-shadow:none; cursor:not-allowed; }
+
+  /* PRACTICE */
+  #practice-screen { padding:16px; min-height:calc(100vh - 56px); display:flex; flex-direction:column; }
+  .practice-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .back-btn { width:36px; height:36px; background:var(--white); border:none; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); flex-shrink:0; }
+  .progress-area { flex:1; }
+  .progress-text { font-size:11px; color:var(--gray); margin-bottom:5px; font-weight:600; }
+  .progress-bar-wrap { background:#E2E5EE; border-radius:10px; height:6px; overflow:hidden; }
+  .progress-bar { height:100%; background:linear-gradient(90deg,var(--coral),#F0886C); border-radius:10px; transition:width 0.4s ease; }
+  .card-wrap { flex:1; display:flex; flex-direction:column; justify-content:center; }
+  .vocab-card { background:var(--white); border-radius:20px; padding:24px 22px 20px; box-shadow:var(--shadow-lg); text-align:center; min-height:160px; display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; margin-bottom:14px; }
+  .vocab-card::before { content:''; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg,var(--coral),#F0886C); }
+  .card-mode-badge { position:absolute; top:12px; right:12px; font-size:9px; font-weight:700; padding:3px 8px; border-radius:20px; }
+  .card-number { font-size:11px; font-weight:700; color:var(--coral); margin-bottom:6px; }
+  .card-question { font-size:24px; font-weight:800; color:var(--navy); line-height:1.3; font-family:'Georgia',serif; }
+  .card-question.jp { font-size:19px; font-family:'Hiragino Kaku Gothic ProN',sans-serif; }
+
+  /* EN→JA mode: tap to reveal */
+  .answer-box { background:var(--gray-light); border-radius:14px; padding:16px 18px; text-align:center; min-height:64px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px dashed #CBD5E1; transition:all 0.2s; margin-bottom:12px; }
+  .answer-box.revealed { background:var(--coral-light); border:2px solid var(--coral); cursor:default; }
+  .tap-hint { font-size:13px; color:#94A3B8; font-weight:600; }
+  .answer-reveal-text { font-size:18px; font-weight:700; color:var(--coral-dark); line-height:1.35; display:none; font-family:'Hiragino Kaku Gothic ProN',sans-serif; }
+  .answer-box.revealed .tap-hint { display:none; }
+  .answer-box.revealed .answer-reveal-text { display:block; }
+  .judge-btns { display:none; grid-template-columns:1fr 1fr; gap:10px; }
+  .judge-btns.visible { display:grid; }
+  .judge-btn { padding:14px; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; }
+  .judge-btn:active { transform:scale(0.97); }
+  .btn-correct { background:var(--green); color:white; }
+  .btn-wrong { background:#EF4444; color:white; }
+
+  /* JA→EN mode: keyboard input */
+  .type-area { margin-bottom:12px; }
+  .type-input-wrap { position:relative; margin-bottom:10px; }
+  .type-input { width:100%; border:2px solid #E2E5EE; border-radius:14px; padding:14px 16px; font-size:18px; font-weight:700; color:var(--navy); font-family:'Georgia',serif; outline:none; transition:border 0.2s; background:var(--white); }
+  .type-input:focus { border-color:var(--coral); }
+  .type-input.correct { border-color:var(--green); background:var(--green-light); color:var(--green); }
+  .type-input.incorrect { border-color:#EF4444; background:#FEF2F2; color:#DC2626; }
+  .type-submit-btn { width:100%; padding:14px; background:var(--navy); color:white; font-size:15px; font-weight:700; border:none; border-radius:14px; cursor:pointer; transition:all 0.15s; margin-bottom:10px; }
+  .type-submit-btn:active { transform:scale(0.98); background:var(--navy-mid); }
+  .type-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
+  .type-feedback { border-radius:12px; padding:12px 16px; font-size:13px; font-weight:700; display:none; margin-bottom:10px; }
+  .type-feedback.correct { background:var(--green-light); color:var(--green); display:block; }
+  .type-feedback.incorrect { background:#FEF2F2; color:#DC2626; display:block; }
+  .type-next-btn { width:100%; padding:14px; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; display:none; }
+  .type-next-btn.show { display:block; }
+  .type-next-btn.next-correct { background:var(--green); color:white; }
+  .type-next-btn.next-incorrect { background:#EF4444; color:white; }
+
+  /* RESULT */
+  #result-screen { padding:24px 16px; display:flex; flex-direction:column; align-items:center; }
+  .result-emoji { font-size:64px; margin-bottom:10px; }
+  .result-title { font-size:22px; font-weight:800; margin-bottom:6px; }
+  .result-subtitle { font-size:14px; color:var(--gray); margin-bottom:24px; }
+  .result-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; width:100%; max-width:340px; margin-bottom:24px; }
+  .stat-card { background:var(--white); border-radius:14px; padding:14px 8px; text-align:center; box-shadow:var(--shadow); }
+  .stat-val { font-size:26px; font-weight:800; }
+  .stat-val.green { color:var(--green); } .stat-val.red { color:#EF4444; } .stat-val.navy { color:var(--navy); }
+  .stat-label { font-size:10px; color:var(--gray); margin-top:3px; font-weight:600; }
+  .result-btns { display:flex; flex-direction:column; gap:10px; width:100%; max-width:340px; }
+  .result-btn { padding:15px; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; }
+  .result-btn:active { transform:scale(0.98); }
+  .btn-retry-missed { background:var(--amber); color:white; }
+  .btn-back-top { background:var(--white); color:var(--navy); border:2px solid #E2E5EE; }
+  .missed-list-wrap { width:100%; max-width:340px; margin-bottom:16px; }
+  .missed-list-label { font-size:11px; font-weight:700; color:var(--gray); margin-bottom:8px; }
+  .missed-item { background:var(--amber-light); border-radius:10px; padding:8px 12px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; }
+  .mi-en { font-weight:700; color:var(--navy); flex-shrink:0; font-size:12px; font-family:'Georgia',serif; }
+  .mi-ja { color:var(--gray); font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>英熟語<span>練習</span>アプリ</h1>
+</header>
+
+<!-- TOP -->
+<div id="top-screen" class="screen active">
+  <p class="section-label">練習モード</p>
+  <div class="mode-cards">
+    <div class="mode-card" id="mc-en-to-ja" onclick="selectMode('en-to-ja')">
+      <div class="mode-icon">🇬🇧</div>
+      <div class="mode-name">英語→日本語</div>
+      <div class="mode-desc">タップで答え表示・自己採点</div>
+    </div>
+    <div class="mode-card" id="mc-ja-to-en" onclick="selectMode('ja-to-en')">
+      <div class="mode-icon">⌨️</div>
+      <div class="mode-name">日本語→英語</div>
+      <div class="mode-desc">キーボードで入力・自動判定</div>
+    </div>
+    <div class="mode-card" id="mc-random" onclick="selectMode('random')">
+      <div class="mode-icon">🎲</div>
+      <div class="mode-name">ランダム</div>
+      <div class="mode-desc">両方ミックス</div>
+    </div>
+    <div class="mode-card" id="mc-missed" onclick="selectMode('missed')">
+      <div class="mode-icon">📌</div>
+      <div class="mode-name">間違えた語句</div>
+      <div class="mode-desc">ミスした語句のみ</div>
+      <div id="missed-badge" class="missed-badge" style="display:none"></div>
+    </div>
+  </div>
+
+  <div id="range-section" style="display:none">
+    <p class="section-label" style="margin-top:20px">番号で範囲を指定（No.89〜380）</p>
+    <div class="range-box">
+      <div class="range-row">
+        <label>開始 No.</label>
+        <input class="range-input" type="number" id="input-from" min="89" max="380" placeholder="89" oninput="updatePreview()">
+      </div>
+      <div class="range-row">
+        <label>終了 No.</label>
+        <input class="range-input" type="number" id="input-to" min="89" max="380" placeholder="380" oninput="updatePreview()">
+      </div>
+      <p class="range-hint">※ 収録されている番号のみ出題されます</p>
+      <div class="range-quick">
+        <div class="quick-btn" onclick="setRange(89,102)">89〜102</div>
+        <div class="quick-btn" onclick="setRange(109,122)">109〜122</div>
+        <div class="quick-btn" onclick="setRange(123,142)">123〜142</div>
+        <div class="quick-btn" onclick="setRange(150,170)">150〜170</div>
+        <div class="quick-btn" onclick="setRange(171,190)">171〜190</div>
+        <div class="quick-btn" onclick="setRange(191,210)">191〜210</div>
+        <div class="quick-btn" onclick="setRange(211,233)">211〜233</div>
+        <div class="quick-btn" onclick="setRange(234,265)">234〜265</div>
+        <div class="quick-btn" onclick="setRange(266,299)">266〜299</div>
+        <div class="quick-btn" onclick="setRange(300,340)">300〜340</div>
+        <div class="quick-btn" onclick="setRange(341,380)">341〜380</div>
+        <div class="quick-btn" onclick="setRange(89,380)">全部</div>
+      </div>
+      <div class="range-preview empty" id="range-preview">範囲を入力してください</div>
+    </div>
+  </div>
+
+  <button class="start-btn" id="start-btn" style="display:none" onclick="startPractice()">スタート ▶</button>
+</div>
+
+<!-- PRACTICE -->
+<div id="practice-screen" class="screen">
+  <div class="practice-header">
+    <button class="back-btn" onclick="goTop()">←</button>
+    <div class="progress-area">
+      <div class="progress-text" id="progress-text">1 / 20</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar" style="width:5%"></div></div>
+    </div>
+  </div>
+  <div class="card-wrap">
+    <div class="vocab-card">
+      <div class="card-mode-badge" id="card-mode-badge" style="background:var(--coral-light);color:var(--coral-dark)">英→日</div>
+      <div class="card-number" id="card-number">No.89</div>
+      <div class="card-question" id="card-question">pick ~ up</div>
+    </div>
+
+    <!-- EN→JA: tap to reveal -->
+    <div id="tap-area">
+      <div class="answer-box" id="answer-box" onclick="revealAnswer()">
+        <div class="tap-hint">タップして答えを見る</div>
+        <div class="answer-reveal-text" id="answer-reveal-text"></div>
+      </div>
+      <div class="judge-btns" id="judge-btns">
+        <button class="judge-btn btn-wrong" onclick="judgeAnswer(false)">✗ わからなかった</button>
+        <button class="judge-btn btn-correct" onclick="judgeAnswer(true)">○ 合ってた！</button>
+      </div>
+    </div>
+
+    <!-- JA→EN: keyboard input -->
+    <div id="type-area" class="type-area" style="display:none">
+      <div class="type-input-wrap">
+        <input class="type-input" type="text" id="type-input" placeholder="英語で入力…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="type-feedback" id="type-feedback"></div>
+      <button class="type-submit-btn" id="type-submit-btn" onclick="checkTypeAnswer()">答え合わせ ▶</button>
+      <button class="type-next-btn" id="type-next-btn" onclick="nextCard()">次の問題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-screen" class="screen">
+  <div class="result-emoji" id="result-emoji">🎉</div>
+  <div class="result-title" id="result-title">お疲れさまでした！</div>
+  <div class="result-subtitle" id="result-subtitle"></div>
+  <div class="result-stats">
+    <div class="stat-card"><div class="stat-val navy" id="stat-total">0</div><div class="stat-label">出題数</div></div>
+    <div class="stat-card"><div class="stat-val green" id="stat-correct">0</div><div class="stat-label">正解</div></div>
+    <div class="stat-card"><div class="stat-val red" id="stat-wrong">0</div><div class="stat-label">要復習</div></div>
+  </div>
+  <div class="missed-list-wrap" id="missed-list-wrap" style="display:none">
+    <div class="missed-list-label">📌 要復習リスト</div>
+    <div id="missed-list"></div>
+  </div>
+  <div class="result-btns">
+    <button class="result-btn btn-retry-missed" id="btn-retry-missed" onclick="retryMissed()" style="display:none">📌 間違えた語句だけ再挑戦</button>
+    <button class="result-btn btn-back-top" onclick="goTop()">← トップに戻る</button>
+  </div>
+</div>
+
+<script>
+const ALL_WORDS = [
+  {no:89,en:'pick ~ up',ja:'①（人）を（車で）迎えに行く ②（物）を取りに行く'},
+  {no:90,en:'get',ja:'①〜を受け取る ②（病気に）なる'},
+  {no:91,en:'take',ja:'①〜を取る ②（時間など）を必要とする'},
+  {no:92,en:'catch',ja:'①〜を捕まえる ②（ぎりぎりで）〜に間に合う'},
+  {no:93,en:'receive',ja:'①（物）を受け取る ②（教育・被害など）を受ける'},
+  {no:94,en:'give',ja:'①〜を与える ②（熟語で）〜を行う'},
+  {no:95,en:'send',ja:'（O₁にO₂）を送る'},
+  {no:96,en:'hand ~ in',ja:'〜を提出する'},
+  {no:97,en:'hand ~ out',ja:'〜を配る・配布する'},
+  {no:98,en:'steal A from B',ja:'BからAを盗む'},
+  {no:99,en:'keep',ja:'①〜をし続ける ②〜を保持する'},
+  {no:100,en:'own',ja:'①自分自身の ②〜を所有する'},
+  {no:101,en:'look for ~',ja:'〜を探す'},
+  {no:102,en:'look ~ up',ja:'（辞書などで）〜を調べる'},
+  {no:109,en:'have an accident',ja:'事故に遭う'},
+  {no:110,en:'continue',ja:'①〜を続ける ②続く'},
+  {no:111,en:'keep on doing',ja:'〜し続ける'},
+  {no:112,en:'stop doing',ja:'〜するのをやめる'},
+  {no:113,en:'give ~ up',ja:'〜をあきらめる'},
+  {no:114,en:'home',ja:'①家 ②家に[で,を]'},
+  {no:115,en:'floor',ja:'①階 ②床'},
+  {no:116,en:'live',ja:'①暮らす ②〜な生活を送る'},
+  {no:117,en:'stay',ja:'①（ある場所に）いる ②滞在'},
+  {no:118,en:'stay with (人)',ja:'（人）の家に泊まる'},
+  {no:119,en:'stay up',ja:'（寝ないで）起きている'},
+  {no:120,en:'take a bath',ja:'お風呂に入る'},
+  {no:121,en:'have ~ for breakfast',ja:'朝食に〜を食べる'},
+  {no:122,en:'call',ja:'①〜に電話する ②OをCと呼ぶ'},
+  {no:123,en:'turn ~ on',ja:'（電気・ガスなど）をつける'},
+  {no:124,en:'clean',ja:'①〜をきれいにする ②清潔な'},
+  {no:125,en:'brush',ja:'〜を磨く・〜をブラッシングする'},
+  {no:126,en:'put ~ away',ja:'〜を片付ける'},
+  {no:127,en:'throw ~ away',ja:'〜を捨てる'},
+  {no:128,en:'clothes',ja:'衣服（複数形）'},
+  {no:129,en:'wear',ja:'〜を着ている・身につけている'},
+  {no:130,en:'put ~ on',ja:'〜を着る・身につける'},
+  {no:131,en:'take ~ off',ja:'〜を脱ぐ・外す'},
+  {no:132,en:'get dressed',ja:'服を着る・着替える'},
+  {no:133,en:'put',ja:'〜を置く・入れる'},
+  {no:134,en:'set',ja:'①〜を置く ②（時間・日程を）決める'},
+  {no:135,en:'close',ja:'①〜を閉める ②〜に近い'},
+  {no:136,en:'hit',ja:'〜を打つ・ぶつかる'},
+  {no:137,en:'turn ~ over',ja:'①〜をひっくり返す ②〜を引き渡す'},
+  {no:138,en:'build',ja:'〜を建てる・建設する'},
+  {no:139,en:'be made of ~',ja:'〜でできている（材質が分かる）'},
+  {no:140,en:'put ~ together',ja:'〜を一緒に組み立てる'},
+  {no:141,en:'want to do',ja:'〜したい'},
+  {no:142,en:'would like to do',ja:'〜したい（丁寧）'},
+  {no:150,en:'favorite',ja:'①お気に入りの ②大好きなもの'},
+  {no:151,en:'tell (人) to do',ja:'（人）に〜するよう言う'},
+  {no:152,en:'ask (人) to do',ja:'（人）に〜するよう頼む'},
+  {no:153,en:'would like (人) to do',ja:'（人）に〜してほしい'},
+  {no:154,en:'advise (人) to do',ja:'（人）に〜するよう忠告する'},
+  {no:155,en:'happy',ja:'①幸せな ②うれしい'},
+  {no:156,en:'sad',ja:'悲しい'},
+  {no:157,en:'afraid',ja:'①怖い ②恐れている'},
+  {no:158,en:'sorry',ja:'①申し訳ない ②残念な'},
+  {no:159,en:'angry',ja:'怒っている'},
+  {no:160,en:'cry',ja:'①泣く ②叫ぶ'},
+  {no:161,en:'worry',ja:'心配する・悩む'},
+  {no:162,en:'be surprised at ~',ja:'〜に驚く'},
+  {no:163,en:'be proud of ~',ja:'〜を誇りに思う'},
+  {no:164,en:'life',ja:'①生命 ②人生 ③生活'},
+  {no:165,en:'dream',ja:'①〜を夢見る ②夢'},
+  {no:166,en:'get married (to ~)',ja:'（〜と）結婚する'},
+  {no:167,en:'be born',ja:'生まれる'},
+  {no:168,en:'die',ja:'①死ぬ ②（機械などが）止まる'},
+  {no:169,en:'win',ja:'①〜に勝つ ②〜を勝ち取る'},
+  {no:170,en:'lose',ja:'①〜に負ける ②〜を失う・なくす'},
+  {no:171,en:'health',ja:'健康（不可算）'},
+  {no:172,en:'get sick',ja:'病気になる・気分が悪くなる'},
+  {no:173,en:'get well',ja:'健康になる・回復する'},
+  {no:174,en:'stay healthy',ja:'健康を保つ'},
+  {no:175,en:'have a cold',ja:'風邪をひいている（状態）'},
+  {no:176,en:'human',ja:'①人間（可算） ②人間の'},
+  {no:177,en:'person',ja:'人（個人）'},
+  {no:178,en:'people',ja:'人々'},
+  {no:179,en:'neighbor',ja:'隣人・近所の人'},
+  {no:180,en:'help',ja:'①（人）を助ける・手伝う ②助け'},
+  {no:181,en:'grow',ja:'①育つ・成長する ②〜を育てる'},
+  {no:182,en:'bring ~ up',ja:'〜を育てる・養育する'},
+  {no:183,en:'take care of ~',ja:'〜の世話をする・〜を管理する'},
+  {no:184,en:'get along with ~',ja:'〜とうまくやっていく'},
+  {no:185,en:'make friends (with ~)',ja:'（〜と）友達になる'},
+  {no:186,en:'a friend from ~',ja:'（学校・職場などの）友達'},
+  {no:187,en:'break up (with ~)',ja:'（〜と）別れる'},
+  {no:188,en:'pay',ja:'①〜を支払う ②支払い'},
+  {no:189,en:'buy',ja:'〜を買う'},
+  {no:190,en:'sell',ja:'〜を売る'},
+  {no:191,en:'expensive',ja:'高価な'},
+  {no:192,en:'cheap',ja:'①安価な ②安い'},
+  {no:193,en:'on sale',ja:'特売で・バーゲンで'},
+  {no:194,en:'job',ja:'仕事（可算）'},
+  {no:195,en:'work',ja:'①仕事（不可算） ②働く'},
+  {no:196,en:'report',ja:'①報告書 ②〜を報告する'},
+  {no:197,en:'work for ~',ja:'〜で働いている・〜に勤めている'},
+  {no:198,en:'vacation',ja:'休暇・バカンス'},
+  {no:199,en:'take (期間) off',ja:'（期間）の休みを取る'},
+  {no:200,en:'on business',ja:'仕事で・商用で'},
+  {no:201,en:'class',ja:'①授業 ②クラス'},
+  {no:202,en:'homework',ja:'宿題（不可算）'},
+  {no:203,en:'paper',ja:'①（学生の）レポート ②新聞'},
+  {no:204,en:'interview',ja:'①面接（試験） ②面接を受ける'},
+  {no:205,en:'teach',ja:'〜を（…に）教える'},
+  {no:206,en:'on my way to school',ja:'学校へ行く途中で'},
+  {no:207,en:'on a school trip',ja:'学校の旅行で'},
+  {no:208,en:'foreign',ja:'外国の・外国人の'},
+  {no:209,en:'abroad',ja:'海外へ・海外で・海外の'},
+  {no:210,en:'international',ja:'国際的な'},
+  {no:211,en:'country',ja:'①（政治的）国 ②（the-）田舎'},
+  {no:212,en:'town',ja:'①町 ②街'},
+  {no:213,en:'street',ja:'①通り ②路上に'},
+  {no:214,en:'begin',ja:'①〜を始める ②始まる'},
+  {no:215,en:'finish',ja:'〜を終える・仕上げる'},
+  {no:216,en:'be over',ja:'終わった（状態）'},
+  {no:217,en:'be done with ~',ja:'〜を終えている'},
+  {no:218,en:'become',ja:'〜になる'},
+  {no:219,en:'turn',ja:'①（色・年齢などが）〜に変わる ②回る'},
+  {no:220,en:'change',ja:'①変わる・変える ②〜を変換する'},
+  {no:221,en:'learn to do',ja:'〜できるようになる（学習・習得）'},
+  {no:222,en:'come to do',ja:'〜するようになる（徐々に）'},
+  {no:223,en:'get used to ~',ja:'〜に慣れる'},
+  {no:224,en:'go bad',ja:'（食品などが）悪くなる・腐る'},
+  {no:225,en:'problem',ja:'（厄介な）問題（可算）'},
+  {no:226,en:'solve',ja:'〜を解決する'},
+  {no:227,en:'do well',ja:'（学校・試験・仕事などを）うまくやる'},
+  {no:228,en:'decide',ja:'（〜すること）を決定する'},
+  {no:229,en:'choose',ja:'①〜を選ぶ ②選ぶ'},
+  {no:230,en:'break',ja:'①（固いもの）を壊す ②〜を骨折する'},
+  {no:231,en:'break down',ja:'故障する'},
+  {no:232,en:'fall',ja:'①落ちる ②落下・滝'},
+  {no:233,en:'drop',ja:'①〜を落とす ②落ちる'},
+  {no:234,en:'busy',ja:'忙しい'},
+  {no:235,en:'free',ja:'①自由な ②無料の・ただの'},
+  {no:236,en:'careful',ja:'注意深い'},
+  {no:237,en:'kind',ja:'①親切な ②種類'},
+  {no:238,en:'poor',ja:'①貧しい ②下手な'},
+  {no:239,en:'smart',ja:'①賢い ②頭のよい'},
+  {no:240,en:'strong',ja:'強い'},
+  {no:241,en:'tall',ja:'（人・物が）高い・背が高い'},
+  {no:242,en:'young',ja:'若い'},
+  {no:243,en:'old',ja:'①古い ②年老いた'},
+  {no:244,en:'beautiful',ja:'美しい・きれいな'},
+  {no:245,en:'wonderful',ja:'すばらしい'},
+  {no:246,en:'great',ja:'①すばらしい ②偉大な'},
+  {no:247,en:'important',ja:'重要な'},
+  {no:248,en:'popular',ja:'①人気のある ②よく行われる'},
+  {no:249,en:'difficult',ja:'難しい'},
+  {no:250,en:'easy',ja:'①簡単な ②気楽な'},
+  {no:251,en:'dangerous',ja:'危険な'},
+  {no:252,en:'safe',ja:'①安全な ②金庫'},
+  {no:253,en:'useful',ja:'役に立つ'},
+  {no:254,en:'possible',ja:'可能な'},
+  {no:255,en:'able to do',ja:'〜することができる'},
+  {no:256,en:'lucky',ja:'運のいい・幸運な'},
+  {no:257,en:'right',ja:'①正しい ②右の'},
+  {no:258,en:'wrong',ja:'①間違っている ②悪い'},
+  {no:259,en:'true',ja:'①本当の ②正しい'},
+  {no:260,en:'real',ja:'①本物の ②現実の'},
+  {no:261,en:'sure',ja:'①確信している ②確かな'},
+  {no:262,en:'ready',ja:'準備ができている'},
+  {no:263,en:'already',ja:'すでに・もう（肯定文）'},
+  {no:264,en:'need to do',ja:'〜する必要がある'},
+  {no:265,en:'have to do',ja:'〜しなければならない'},
+  {no:266,en:'both A and B',ja:'AもBも両方とも'},
+  {no:267,en:'not A but B',ja:'AではなくB'},
+  {no:268,en:'not only A but (also) B',ja:'AだけでなくBも'},
+  {no:269,en:'at least',ja:'少なくとも・最低でも'},
+  {no:270,en:'the same ~',ja:'同じ〜'},
+  {no:271,en:'especially',ja:'特に・とりわけ'},
+  {no:272,en:'have (程度) to do with ~',ja:'〜と多少関係がある'},
+  {no:273,en:'that of ~',ja:'〜のそれ'},
+  {no:274,en:'some',ja:'①いくつかの・何か ②不定の'},
+  {no:275,en:'any',ja:'①（疑問・否定文で）何か ②どんな（〜でも）'},
+  {no:276,en:'many',ja:'多くの'},
+  {no:277,en:'much',ja:'多量の・多く'},
+  {no:278,en:'a few ~',ja:'いくらかの〜・少数の〜'},
+  {no:279,en:'a little ~',ja:'少量の〜・わずかな〜'},
+  {no:280,en:'a lot of ~',ja:'たくさんの〜'},
+  {no:281,en:'a piece of ~',ja:'１つの〜・一片の〜'},
+  {no:282,en:'a couple of ~',ja:'２つの〜・２、３の〜'},
+  {no:283,en:'thousand',ja:'千'},
+  {no:284,en:'thousands of ~',ja:'何千もの〜'},
+  {no:285,en:'(数字) percent',ja:'〜パーセント'},
+  {no:286,en:'all',ja:'①すべての ②全体として'},
+  {no:287,en:'whole',ja:'全体の・全部の'},
+  {no:288,en:'have a ~ time',ja:'〜な時間を過ごす'},
+  {no:289,en:'spend',ja:'①（時間）を過ごす ②（お金）を使う'},
+  {no:290,en:'waste',ja:'①無駄にする ②廃棄物・無駄'},
+  {no:291,en:'put ~ off',ja:'〜を延期する'},
+  {no:292,en:'be going to do',ja:'〜するつもりだ'},
+  {no:293,en:'try',ja:'〜を試みる'},
+  {no:294,en:'plan',ja:'①〜を計画する ②計画'},
+  {no:295,en:'carry ~ out',ja:'（約束・命令など）を実行する'},
+  {no:296,en:'behind schedule',ja:'予定より遅れて'},
+  {no:297,en:'wait for ~',ja:'〜を待つ'},
+  {no:298,en:'keep (人) waiting',ja:'（人）を待たせる'},
+  {no:299,en:'in time (for ~)',ja:'（〜に）間に合って'},
+  {no:300,en:'on time',ja:'時間通りに・定刻に'},
+  {no:301,en:'late',ja:'①遅い ②遅れた'},
+  {no:302,en:'early',ja:'①早い・早く ②初期の'},
+  {no:303,en:'quickly',ja:'速く・すばやく'},
+  {no:304,en:'soon',ja:'まもなく・すぐに'},
+  {no:305,en:'right away',ja:'すぐに・直ちに'},
+  {no:306,en:'at once',ja:'①すぐに ②同時に'},
+  {no:307,en:'later',ja:'（副）後で・（形）後の'},
+  {no:308,en:'in',ja:'（時間）後に'},
+  {no:309,en:'at first',ja:'最初は'},
+  {no:310,en:'for the first time',ja:'初めて'},
+  {no:311,en:'in the end',ja:'結局・ついに'},
+  {no:312,en:'at last',ja:'ついに・やっと'},
+  {no:313,en:'after all',ja:'①（予想に反して）結局 ②そもそも'},
+  {no:314,en:'first',ja:'①第１の ②初めて ③まず第１に'},
+  {no:315,en:'second',ja:'①（the-）第２の ②第２に'},
+  {no:316,en:'finally',ja:'①（列挙して）最後に ②最終的に'},
+  {no:317,en:'have been to ~',ja:'〜へ行ったことがある'},
+  {no:318,en:'ever',ja:'（否定文・疑問文で）これまでに'},
+  {no:319,en:'never',ja:'決して〜ない'},
+  {no:320,en:'experience',ja:'①経験 ②〜を経験する'},
+  {no:321,en:'already',ja:'①（肯定文で）すでに ②（疑問文で）もう'},
+  {no:322,en:'yet',ja:'①（否定文で）まだ〜ない ②（疑問文で）もう'},
+  {no:323,en:'still',ja:'①まだ・依然として ②じっとしている'},
+  {no:324,en:'at 9 a.m.',ja:'午前9時に'},
+  {no:325,en:'on February 14th',ja:'2月14日に'},
+  {no:326,en:'on weekends',ja:'週末に'},
+  {no:327,en:'every day',ja:'毎日'},
+  {no:328,en:'one day',ja:'ある日'},
+  {no:329,en:'these days',ja:'近ごろ・最近'},
+  {no:330,en:'the other day',ja:'先日'},
+  {no:331,en:'in 2020',ja:'2020年に'},
+  {no:332,en:'last year',ja:'去年'},
+  {no:333,en:'time',ja:'①時間 ②〜回・〜倍 ③時代'},
+  {no:334,en:'age',ja:'①年齢・時代 ②年をとる'},
+  {no:335,en:'present',ja:'①現在の ②出席している ③贈り物'},
+  {no:336,en:'past',ja:'①過去の ②〜を過ぎて'},
+  {no:337,en:'future',ja:'①将来の・未来の ②（the）未来・将来'},
+  {no:338,en:'noon',ja:'正午'},
+  {no:339,en:'all day',ja:'一日中'},
+  {no:340,en:'all the way',ja:'①わざわざ ②はるばる ③ずっと'},
+  {no:341,en:'by',ja:'①〜までに ②〜のそばに ③〜によって'},
+  {no:342,en:'until',ja:'①〜までずっと ②〜して初めて'},
+  {no:343,en:'during',ja:'〜の間（ずっと）'},
+  {no:344,en:'while',ja:'①〜している間に ②〜する一方で'},
+  {no:345,en:'since',ja:'①〜して以来 ②〜なので ③それ以来'},
+  {no:346,en:'once',ja:'①かつて ②一度 ③〜すると'},
+  {no:347,en:'used to',ja:'以前は〜したものだ'},
+  {no:348,en:'not ~ anymore',ja:'もう〜ない'},
+  {no:349,en:'no longer',ja:'もう〜ない・これ以上〜ない'},
+  {no:350,en:'here',ja:'ここに・ここへ・ここで'},
+  {no:351,en:'there',ja:'そこに・そこへ・あそこで'},
+  {no:352,en:'outside',ja:'①外に ②外側の ③〜の外に'},
+  {no:353,en:'at home',ja:'①家で ②くつろいで'},
+  {no:354,en:'between A and B',ja:'AとBの間に'},
+  {no:355,en:'in front of ~',ja:'〜の前に'},
+  {no:356,en:'behind',ja:'①〜の後ろに ②後ろに'},
+  {no:357,en:'next to ~',ja:'①〜の隣に ②ほとんど'},
+  {no:358,en:'far away from ~',ja:'〜から遠い'},
+  {no:359,en:'near',ja:'〜の近くに'},
+  {no:360,en:'across from ~',ja:'〜の向かい側に'},
+  {no:361,en:'all over ~',ja:'〜中で・〜の全体で'},
+  {no:362,en:'out of ~',ja:'①〜から ②〜がなくて'},
+  {no:363,en:'together',ja:'一緒に'},
+  {no:364,en:'without',ja:'〜なしに'},
+  {no:365,en:'alone',ja:'一人で'},
+  {no:366,en:'reason',ja:'①理由 ②理性'},
+  {no:367,en:'because',ja:'なので（接続詞）'},
+  {no:368,en:'because of ~',ja:'〜のために（前置詞句）'},
+  {no:369,en:'thanks to ~',ja:'〜のおかげで'},
+  {no:370,en:'way',ja:'①方法 ②（in〜way）点で ③道'},
+  {no:371,en:'how to do',ja:'いかに〜するのか・〜の仕方'},
+  {no:372,en:'in order to do',ja:'〜するために'},
+  {no:373,en:'by train',ja:'電車（列車）で'},
+  {no:374,en:'with a pencil',ja:'鉛筆で'},
+  {no:375,en:'on YouTube',ja:'ユーチューブで'},
+  {no:376,en:'online',ja:'①オンラインで ②インターネットで'},
+  {no:377,en:'in English',ja:'英語で'},
+  {no:378,en:'always',ja:'いつも'},
+  {no:379,en:'not ~ always',ja:'必ずしも〜ない'},
+  {no:380,en:'usually',ja:'普段は・普通'},
+];
+
+let currentMode=null, practiceList=[], currentIdx=0, correctCount=0;
+let sessionMissed=[], missedWordsStorage=JSON.parse(localStorage.getItem('eimei_missed')||'[]');
+let currentIsEnToJa=true;
+
+function selectMode(mode){
+  currentMode=mode;
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('active-mode'));
+  document.getElementById('mc-'+mode).classList.add('active-mode');
+  if(mode==='missed'){
+    document.getElementById('range-section').style.display='none';
+    const has=missedWordsStorage.length>0;
+    document.getElementById('start-btn').style.display='block';
+    document.getElementById('start-btn').disabled=!has;
+    document.getElementById('start-btn').textContent=has?`スタート ▶ (${missedWordsStorage.length}語)`:'間違えた語句がありません';
+  } else {
+    document.getElementById('range-section').style.display='block';
+    document.getElementById('start-btn').style.display='block';
+    updatePreview();
+  }
+}
+
+function setRange(from,to){
+  document.getElementById('input-from').value=from;
+  document.getElementById('input-to').value=to;
+  updatePreview();
+}
+
+function updatePreview(){
+  const from=parseInt(document.getElementById('input-from').value)||0;
+  const to=parseInt(document.getElementById('input-to').value)||0;
+  const prev=document.getElementById('range-preview');
+  const btn=document.getElementById('start-btn');
+  if(!from||!to){prev.className='range-preview empty';prev.textContent='範囲を入力してください';btn.disabled=true;btn.textContent='範囲を指定してください';return;}
+  if(from>to){prev.className='range-preview error';prev.textContent='⚠ 開始番号が終了番号より大きいです';btn.disabled=true;btn.textContent='範囲を確認してください';return;}
+  const matched=ALL_WORDS.filter(w=>w.no>=from&&w.no<=to);
+  if(matched.length===0){prev.className='range-preview error';prev.textContent=`⚠ No.${from}〜${to} に収録語句がありません`;btn.disabled=true;btn.textContent='該当する語句がありません';}
+  else{prev.className='range-preview';prev.textContent=`✅ No.${from}〜${to} → ${matched.length}語が対象`;btn.disabled=false;btn.textContent=`スタート ▶ (${matched.length}語)`;}
+}
+
+function startPractice(){
+  if(currentMode==='missed'){practiceList=[...missedWordsStorage];}
+  else{
+    const from=parseInt(document.getElementById('input-from').value);
+    const to=parseInt(document.getElementById('input-to').value);
+    let words=ALL_WORDS.filter(w=>w.no>=from&&w.no<=to);
+    for(let i=words.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[words[i],words[j]]=[words[j],words[i]];}
+    practiceList=words;
+  }
+  currentIdx=0;correctCount=0;sessionMissed=[];
+  showScreen('practice-screen');loadCard();
+}
+
+function loadCard(){
+  const w=practiceList[currentIdx],total=practiceList.length;
+  document.getElementById('progress-text').textContent=`${currentIdx+1} / ${total}`;
+  document.getElementById('progress-bar').style.width=`${((currentIdx+1)/total)*100}%`;
+
+  currentIsEnToJa = currentMode==='en-to-ja'||currentMode==='missed' ? true
+                  : currentMode==='ja-to-en' ? false
+                  : Math.random()<0.5;
+
+  const qEl=document.getElementById('card-question');
+  const badge=document.getElementById('card-mode-badge');
+  document.getElementById('card-number').textContent=`No.${w.no}`;
+
+  if(currentIsEnToJa){
+    qEl.textContent=w.en; qEl.className='card-question';
+    badge.textContent='英→日'; badge.style.background='var(--coral-light)'; badge.style.color='var(--coral-dark)';
+    // tap mode
+    document.getElementById('tap-area').style.display='block';
+    document.getElementById('type-area').style.display='none';
+    const box=document.getElementById('answer-box');
+    box.classList.remove('revealed');
+    document.querySelector('.tap-hint').style.display='block';
+    document.getElementById('answer-reveal-text').textContent=w.ja;
+    document.getElementById('answer-reveal-text').style.display='none';
+    document.getElementById('judge-btns').classList.remove('visible');
+  } else {
+    qEl.textContent=w.ja; qEl.className='card-question jp';
+    badge.textContent='日→英'; badge.style.background='#EEF0F8'; badge.style.color='var(--navy-mid)';
+    // type mode
+    document.getElementById('tap-area').style.display='none';
+    document.getElementById('type-area').style.display='block';
+    const inp=document.getElementById('type-input');
+    inp.value=''; inp.className='type-input'; inp.disabled=false;
+    document.getElementById('type-feedback').className='type-feedback';
+    document.getElementById('type-feedback').textContent='';
+    document.getElementById('type-submit-btn').style.display='block';
+    document.getElementById('type-submit-btn').disabled=false;
+    document.getElementById('type-next-btn').className='type-next-btn';
+    setTimeout(()=>inp.focus(),100);
+  }
+}
+
+// EN→JA: tap reveal
+function revealAnswer(){
+  const box=document.getElementById('answer-box');
+  if(box.classList.contains('revealed'))return;
+  box.classList.add('revealed');
+  document.querySelector('.tap-hint').style.display='none';
+  document.getElementById('answer-reveal-text').style.display='block';
+  document.getElementById('judge-btns').classList.add('visible');
+}
+
+function judgeAnswer(correct){
+  const w=practiceList[currentIdx];
+  if(correct){correctCount++;missedWordsStorage=missedWordsStorage.filter(x=>x.no!==w.no);}
+  else{sessionMissed.push(w);if(!missedWordsStorage.find(x=>x.no===w.no))missedWordsStorage.push(w);}
+  localStorage.setItem('eimei_missed',JSON.stringify(missedWordsStorage));
+  currentIdx++;
+  if(currentIdx>=practiceList.length)showResult();else loadCard();
+}
+
+// JA→EN: keyboard
+function checkTypeAnswer(){
+  const w=practiceList[currentIdx];
+  const inp=document.getElementById('type-input');
+  const userAns=inp.value.trim().toLowerCase();
+  const correct=w.en.toLowerCase();
+  const isCorrect=userAns===correct;
+  const fb=document.getElementById('type-feedback');
+  const nextBtn=document.getElementById('type-next-btn');
+
+  inp.disabled=true;
+  document.getElementById('type-submit-btn').style.display='none';
+
+  if(isCorrect){
+    inp.className='type-input correct';
+    fb.className='type-feedback correct';
+    fb.textContent='✅ 正解！';
+    correctCount++;
+    missedWordsStorage=missedWordsStorage.filter(x=>x.no!==w.no);
+    nextBtn.className='type-next-btn show next-correct';
+  } else {
+    inp.className='type-input incorrect';
+    fb.className='type-feedback incorrect';
+    fb.textContent=`✗ 不正解　正解：${w.en}`;
+    sessionMissed.push(w);
+    if(!missedWordsStorage.find(x=>x.no===w.no))missedWordsStorage.push(w);
+    nextBtn.className='type-next-btn show next-incorrect';
+  }
+  localStorage.setItem('eimei_missed',JSON.stringify(missedWordsStorage));
+  nextBtn.textContent=currentIdx+1>=practiceList.length?'結果を見る →':'次の問題 →';
+}
+
+function nextCard(){
+  currentIdx++;
+  if(currentIdx>=practiceList.length)showResult();else loadCard();
+}
+
+// Enter key support
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    const submitBtn=document.getElementById('type-submit-btn');
+    const nextBtn=document.getElementById('type-next-btn');
+    if(nextBtn.classList.contains('show')){nextCard();}
+    else if(submitBtn&&submitBtn.style.display!=='none'&&!submitBtn.disabled){checkTypeAnswer();}
+  }
+});
+
+function showResult(){
+  const total=practiceList.length,wrong=total-correctCount,pct=Math.round(correctCount/total*100);
+  let emoji='🎉',title='素晴らしい！';
+  if(pct<50){emoji='💪';title='もう少し！';}else if(pct<80){emoji='😊';title='よくできました！';}
+  document.getElementById('result-emoji').textContent=emoji;
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-subtitle').textContent=`正解率 ${pct}%`;
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-correct').textContent=correctCount;
+  document.getElementById('stat-wrong').textContent=wrong;
+  const mw=document.getElementById('missed-list-wrap'),ml=document.getElementById('missed-list'),rb=document.getElementById('btn-retry-missed');
+  if(sessionMissed.length>0){
+    mw.style.display='block';
+    ml.innerHTML=sessionMissed.map(w=>`<div class="missed-item"><span class="mi-en">${w.en}</span><span class="mi-ja">${w.ja}</span></div>`).join('');
+    rb.style.display='block';rb.textContent=`📌 間違えた${sessionMissed.length}語を再挑戦`;
+  }else{mw.style.display='none';rb.style.display='none';}
+  showScreen('result-screen');updateBadge();
+}
+
+function retryMissed(){
+  practiceList=[...sessionMissed];
+  for(let i=practiceList.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[practiceList[i],practiceList[j]]=[practiceList[j],practiceList[i]];}
+  currentIdx=0;correctCount=0;sessionMissed=[];
+  showScreen('practice-screen');loadCard();
+}
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function goTop(){showScreen('top-screen');updateBadge();}
+function updateBadge(){
+  const b=document.getElementById('missed-badge');
+  if(missedWordsStorage.length>0){b.style.display='inline-block';b.textContent=`${missedWordsStorage.length}語`;}
+  else b.style.display='none';
+}
+updateBadge();
+</script>
+</body>
+</html>
