@@ -56,44 +56,24 @@
   .progress-bar-wrap { background:#E2E5EE; border-radius:10px; height:6px; overflow:hidden; }
   .progress-bar { height:100%; background:linear-gradient(90deg,var(--coral),#F0886C); border-radius:10px; transition:width 0.4s ease; }
   .card-wrap { flex:1; display:flex; flex-direction:column; justify-content:center; }
-  .vocab-card { background:var(--white); border-radius:20px; padding:24px 22px 20px; box-shadow:var(--shadow-lg); text-align:center; min-height:160px; display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; margin-bottom:14px; }
+  .vocab-card { background:var(--white); border-radius:20px; padding:24px 22px 20px; box-shadow:var(--shadow-lg); text-align:center; min-height:130px; display:flex; flex-direction:column; justify-content:center; position:relative; overflow:hidden; margin-bottom:12px; }
   .vocab-card::before { content:''; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg,var(--coral),#F0886C); }
   .card-mode-badge { position:absolute; top:12px; right:12px; font-size:9px; font-weight:700; padding:3px 8px; border-radius:20px; }
   .card-number { font-size:11px; font-weight:700; color:var(--coral); margin-bottom:6px; }
   .card-question { font-size:24px; font-weight:800; color:var(--navy); line-height:1.3; font-family:'Georgia',serif; }
   .card-question.jp { font-size:19px; font-family:'Hiragino Kaku Gothic ProN',sans-serif; }
 
-  /* EN→JA mode: tap to reveal */
-  .answer-box { background:var(--gray-light); border-radius:14px; padding:16px 18px; text-align:center; min-height:64px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px dashed #CBD5E1; transition:all 0.2s; margin-bottom:12px; }
-  .answer-box.revealed { background:var(--coral-light); border:2px solid var(--coral); cursor:default; }
-  .tap-hint { font-size:13px; color:#94A3B8; font-weight:600; }
-  .answer-reveal-text { font-size:18px; font-weight:700; color:var(--coral-dark); line-height:1.35; display:none; font-family:'Hiragino Kaku Gothic ProN',sans-serif; }
-  .answer-box.revealed .tap-hint { display:none; }
-  .answer-box.revealed .answer-reveal-text { display:block; }
-  .judge-btns { display:none; grid-template-columns:1fr 1fr; gap:10px; }
-  .judge-btns.visible { display:grid; }
-  .judge-btn { padding:14px; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; }
-  .judge-btn:active { transform:scale(0.97); }
-  .btn-correct { background:var(--green); color:white; }
-  .btn-wrong { background:#EF4444; color:white; }
-
-  /* JA→EN mode: keyboard input */
-  .type-area { margin-bottom:12px; }
-  .type-input-wrap { position:relative; margin-bottom:10px; }
-  .type-input { width:100%; border:2px solid #E2E5EE; border-radius:14px; padding:14px 16px; font-size:18px; font-weight:700; color:var(--navy); font-family:'Georgia',serif; outline:none; transition:border 0.2s; background:var(--white); }
-  .type-input:focus { border-color:var(--coral); }
-  .type-input.correct { border-color:var(--green); background:var(--green-light); color:var(--green); }
-  .type-input.incorrect { border-color:#EF4444; background:#FEF2F2; color:#DC2626; }
-  .type-submit-btn { width:100%; padding:14px; background:var(--navy); color:white; font-size:15px; font-weight:700; border:none; border-radius:14px; cursor:pointer; transition:all 0.15s; margin-bottom:10px; }
-  .type-submit-btn:active { transform:scale(0.98); background:var(--navy-mid); }
-  .type-submit-btn:disabled { background:#ccc; cursor:not-allowed; }
-  .type-feedback { border-radius:12px; padding:12px 16px; font-size:13px; font-weight:700; display:none; margin-bottom:10px; }
-  .type-feedback.correct { background:var(--green-light); color:var(--green); display:block; }
-  .type-feedback.incorrect { background:#FEF2F2; color:#DC2626; display:block; }
-  .type-next-btn { width:100%; padding:14px; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; display:none; }
-  .type-next-btn.show { display:block; }
-  .type-next-btn.next-correct { background:var(--green); color:white; }
-  .type-next-btn.next-incorrect { background:#EF4444; color:white; }
+  /* 4択 */
+  .choices { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .choice-btn { padding:13px 15px; border:2px solid #E2E5EE; border-radius:14px; font-size:13px; font-weight:600; cursor:pointer; background:var(--white); color:var(--navy); transition:all 0.15s; text-align:left; line-height:1.6; font-family:'Hiragino Kaku Gothic ProN',sans-serif; }
+  .choice-btn.en { font-family:'Georgia',serif; font-size:14px; }
+  .choice-btn:active:not([disabled]) { transform:scale(0.98); background:var(--gray-light); }
+  .choice-btn.correct { background:var(--green-light); border-color:var(--green); color:var(--green); }
+  .choice-btn.wrong { background:#FEF2F2; border-color:#EF4444; color:#DC2626; }
+  .next-btn { width:100%; padding:14px; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.15s; display:none; }
+  .next-btn.show { display:block; }
+  .next-btn.next-correct { background:var(--green); color:white; }
+  .next-btn.next-incorrect { background:#EF4444; color:white; }
 
   /* RESULT */
   #result-screen { padding:24px 16px; display:flex; flex-direction:column; align-items:center; }
@@ -129,12 +109,12 @@
     <div class="mode-card" id="mc-en-to-ja" onclick="selectMode('en-to-ja')">
       <div class="mode-icon">🇬🇧</div>
       <div class="mode-name">英語→日本語</div>
-      <div class="mode-desc">タップで答え表示・自己採点</div>
+      <div class="mode-desc">英熟語を見て日本語訳を4択で答える</div>
     </div>
     <div class="mode-card" id="mc-ja-to-en" onclick="selectMode('ja-to-en')">
       <div class="mode-icon">⌨️</div>
       <div class="mode-name">日本語→英語</div>
-      <div class="mode-desc">キーボードで入力・自動判定</div>
+      <div class="mode-desc">日本語訳を見て英熟語を4択で答える</div>
     </div>
     <div class="mode-card" id="mc-random" onclick="selectMode('random')">
       <div class="mode-icon">🎲</div>
@@ -197,28 +177,8 @@
       <div class="card-number" id="card-number">No.89</div>
       <div class="card-question" id="card-question">pick ~ up</div>
     </div>
-
-    <!-- EN→JA: tap to reveal -->
-    <div id="tap-area">
-      <div class="answer-box" id="answer-box" onclick="revealAnswer()">
-        <div class="tap-hint">タップして答えを見る</div>
-        <div class="answer-reveal-text" id="answer-reveal-text"></div>
-      </div>
-      <div class="judge-btns" id="judge-btns">
-        <button class="judge-btn btn-wrong" onclick="judgeAnswer(false)">✗ わからなかった</button>
-        <button class="judge-btn btn-correct" onclick="judgeAnswer(true)">○ 合ってた！</button>
-      </div>
-    </div>
-
-    <!-- JA→EN: keyboard input -->
-    <div id="type-area" class="type-area" style="display:none">
-      <div class="type-input-wrap">
-        <input class="type-input" type="text" id="type-input" placeholder="英語で入力…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-      </div>
-      <div class="type-feedback" id="type-feedback"></div>
-      <button class="type-submit-btn" id="type-submit-btn" onclick="checkTypeAnswer()">答え合わせ ▶</button>
-      <button class="type-next-btn" id="type-next-btn" onclick="nextCard()">次の問題 →</button>
-    </div>
+    <div class="choices" id="choices"></div>
+    <button class="next-btn" id="next-btn" onclick="nextCard()">次の問題 →</button>
   </div>
 </div>
 
@@ -527,7 +487,7 @@ const ALL_WORDS = [
 
 let currentMode=null, practiceList=[], currentIdx=0, correctCount=0;
 let sessionMissed=[], missedWordsStorage=JSON.parse(localStorage.getItem('eimei_missed')||'[]');
-let currentIsEnToJa=true;
+let currentIsEnToJa=true, correctNo=null;
 
 function selectMode(mode){
   currentMode=mode;
@@ -593,97 +553,54 @@ function loadCard(){
   if(currentIsEnToJa){
     qEl.textContent=w.en; qEl.className='card-question';
     badge.textContent='英→日'; badge.style.background='var(--coral-light)'; badge.style.color='var(--coral-dark)';
-    // tap mode
-    document.getElementById('tap-area').style.display='block';
-    document.getElementById('type-area').style.display='none';
-    const box=document.getElementById('answer-box');
-    box.classList.remove('revealed');
-    document.querySelector('.tap-hint').style.display='block';
-    document.getElementById('answer-reveal-text').textContent=w.ja;
-    document.getElementById('answer-reveal-text').style.display='none';
-    document.getElementById('judge-btns').classList.remove('visible');
   } else {
     qEl.textContent=w.ja; qEl.className='card-question jp';
     badge.textContent='日→英'; badge.style.background='#EEF0F8'; badge.style.color='var(--navy-mid)';
-    // type mode
-    document.getElementById('tap-area').style.display='none';
-    document.getElementById('type-area').style.display='block';
-    const inp=document.getElementById('type-input');
-    inp.value=''; inp.className='type-input'; inp.disabled=false;
-    document.getElementById('type-feedback').className='type-feedback';
-    document.getElementById('type-feedback').textContent='';
-    document.getElementById('type-submit-btn').style.display='block';
-    document.getElementById('type-submit-btn').disabled=false;
-    document.getElementById('type-next-btn').className='type-next-btn';
-    setTimeout(()=>inp.focus(),100);
   }
+
+  correctNo=w.no;
+
+  // 正解1つ＋ALL_WORDSから不正解3つをランダムに選ぶ
+  const others=ALL_WORDS.filter(x=>x.no!==w.no);
+  for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]];}
+  const choices=[w,...others.slice(0,3)];
+  for(let i=choices.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[choices[i],choices[j]]=[choices[j],choices[i]];}
+
+  const isEn=!currentIsEnToJa;
+  document.getElementById('choices').innerHTML=choices.map(c=>
+    `<button class="choice-btn${isEn?' en':''}" data-no="${c.no}" onclick="selectChoice(this)">${isEn?c.en:c.ja}</button>`
+  ).join('');
+
+  document.getElementById('next-btn').className='next-btn';
 }
 
-// EN→JA: tap reveal
-function revealAnswer(){
-  const box=document.getElementById('answer-box');
-  if(box.classList.contains('revealed'))return;
-  box.classList.add('revealed');
-  document.querySelector('.tap-hint').style.display='none';
-  document.getElementById('answer-reveal-text').style.display='block';
-  document.getElementById('judge-btns').classList.add('visible');
-}
+function selectChoice(btn){
+  const isCorrect=parseInt(btn.dataset.no)===correctNo;
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    b.disabled=true;
+    if(parseInt(b.dataset.no)===correctNo) b.classList.add('correct');
+  });
+  if(!isCorrect) btn.classList.add('wrong');
 
-function judgeAnswer(correct){
   const w=practiceList[currentIdx];
-  if(correct){correctCount++;missedWordsStorage=missedWordsStorage.filter(x=>x.no!==w.no);}
-  else{sessionMissed.push(w);if(!missedWordsStorage.find(x=>x.no===w.no))missedWordsStorage.push(w);}
-  localStorage.setItem('eimei_missed',JSON.stringify(missedWordsStorage));
-  currentIdx++;
-  if(currentIdx>=practiceList.length)showResult();else loadCard();
-}
-
-// JA→EN: keyboard
-function checkTypeAnswer(){
-  const w=practiceList[currentIdx];
-  const inp=document.getElementById('type-input');
-  const userAns=inp.value.trim().toLowerCase();
-  const correct=w.en.toLowerCase();
-  const isCorrect=userAns===correct;
-  const fb=document.getElementById('type-feedback');
-  const nextBtn=document.getElementById('type-next-btn');
-
-  inp.disabled=true;
-  document.getElementById('type-submit-btn').style.display='none';
-
   if(isCorrect){
-    inp.className='type-input correct';
-    fb.className='type-feedback correct';
-    fb.textContent='✅ 正解！';
     correctCount++;
     missedWordsStorage=missedWordsStorage.filter(x=>x.no!==w.no);
-    nextBtn.className='type-next-btn show next-correct';
   } else {
-    inp.className='type-input incorrect';
-    fb.className='type-feedback incorrect';
-    fb.textContent=`✗ 不正解　正解：${w.en}`;
     sessionMissed.push(w);
-    if(!missedWordsStorage.find(x=>x.no===w.no))missedWordsStorage.push(w);
-    nextBtn.className='type-next-btn show next-incorrect';
+    if(!missedWordsStorage.find(x=>x.no===w.no)) missedWordsStorage.push(w);
   }
   localStorage.setItem('eimei_missed',JSON.stringify(missedWordsStorage));
-  nextBtn.textContent=currentIdx+1>=practiceList.length?'結果を見る →':'次の問題 →';
+
+  const nb=document.getElementById('next-btn');
+  nb.className='next-btn show '+(isCorrect?'next-correct':'next-incorrect');
+  nb.textContent=currentIdx+1>=practiceList.length?'結果を見る →':'次の問題 →';
 }
 
 function nextCard(){
   currentIdx++;
-  if(currentIdx>=practiceList.length)showResult();else loadCard();
+  if(currentIdx>=practiceList.length) showResult(); else loadCard();
 }
-
-// Enter key support
-document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    const submitBtn=document.getElementById('type-submit-btn');
-    const nextBtn=document.getElementById('type-next-btn');
-    if(nextBtn.classList.contains('show')){nextCard();}
-    else if(submitBtn&&submitBtn.style.display!=='none'&&!submitBtn.disabled){checkTypeAnswer();}
-  }
-});
 
 function showResult(){
   const total=practiceList.length,wrong=total-correctCount,pct=Math.round(correctCount/total*100);
